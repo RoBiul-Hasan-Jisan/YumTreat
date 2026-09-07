@@ -1,0 +1,56 @@
+[
+    {
+        "name": "Margherita Classic Pizza",
+        "description": "A simple yet delicious pizza topped with fresh mozzarella, tomato sauce, and fragrant basil leaves.",
+        "imageUrl": "pizza-1",
+        "rating": 0,
+        "numberOfReviews": 0,
+        "currentPrice": 8.5,
+        "pastPrice": 0,
+        "category": "pizza",
+        "tags": [
+            "vegetarian",
+            "cheesy",
+            "gluten-free"
+        ],
+        "customOrder": true,
+        "isAvailable": true,
+        "__v": 0
+    },
+    {
+        "name": "Spicy Chicken Tandoori Pizza",
+        "description": "Tandoori chicken chunks layered on a cheesy base with onions, peppers, and spicy tomato sauce.",
+        "imageUrl": "pizza-2",
+        "rating": 0,
+        "numberOfReviews": 0,
+        "currentPrice": 9.2,
+        "pastPrice": 0,
+        "category": "pizza",
+        "tags": [
+            "chicken",
+            "spicy",
+            "cheesy"
+        ],
+        "customOrder": true,
+        "isAvailable": true,
+        "__v": 0
+    },
+    {
+        "name": "Veggie Overload Pizza",
+        "description": "A crispy crust topped with mushrooms, olives, capsicum, onions, and mozzarella cheese for veggie lovers.",
+        "imageUrl": "pizza-3",
+        "rating": 0,
+        "numberOfReviews": 0,
+        "currentPrice": 8.0,
+        "pastPrice": 0,
+        "category": "pizza",
+        "tags": [
+            "vegetarian",
+            "cheesy",
+            "nut-free"
+        ],
+        "customOrder": true,
+        "isAvailable": true,
+        "__v": 0
+    }
+]
