@@ -1,4 +1,5 @@
 import { FiStar } from "react-icons/fi";
+import { motion } from "framer-motion";
 
 export function Eyebrow({ children }) {
   return <span className="badge">{children}</span>;
@@ -32,8 +33,17 @@ export function Stars({ rating = 0, size = 14 }) {
 
 export function Loader({ label = "Loading…" }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-24 text-ink-900/50">
-      <span className="h-10 w-10 animate-spin rounded-full border-4 border-ember-200 border-t-ember-500" />
+    <div className="flex flex-col items-center justify-center gap-4 py-24 text-ink-900/50">
+      <div className="flex items-center gap-2">
+        {[0, 1, 2].map((i) => (
+          <motion.span
+            key={i}
+            className="h-3 w-3 rounded-full bg-ember-500"
+            animate={{ y: [0, -12, 0], opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut", delay: i * 0.15 }}
+          />
+        ))}
+      </div>
       <p className="text-sm font-medium">{label}</p>
     </div>
   );

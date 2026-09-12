@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { Stars, EmptyState } from "@/components/UI";
+import { Reveal, StaggerReveal, StaggerItem } from "@/components/motion/Reveal";
 import { useAuth } from "@/context/AuthContext";
 import { addReview } from "@/lib/api";
 
@@ -40,23 +42,27 @@ export default function ReviewsPanel({ food, reviews, onReviewAdded }) {
               <EmptyState title="No reviews yet" subtitle="Be the first to share how this dish tasted." />
             </div>
           ) : (
-            <div className="mt-6 space-y-5">
-              {reviews.map((r) => (
-                <div key={r._id} className="card p-6">
-                  <div className="flex items-center justify-between">
-                    <Stars rating={r.rating} />
-                    <span className="text-xs text-ink-900/40">
-                      {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ""}
-                    </span>
-                  </div>
-                  <p className="mt-3 text-sm leading-relaxed text-ink-900/70">{r.feedback}</p>
-                </div>
-              ))}
-            </div>
+            <StaggerReveal className="mt-6 space-y-5">
+              <AnimatePresence initial={false}>
+                {reviews.map((r) => (
+                  <StaggerItem key={r._id}>
+                    <motion.div layout className="card p-6">
+                      <div className="flex items-center justify-between">
+                        <Stars rating={r.rating} />
+                        <span className="text-xs text-ink-900/40">
+                          {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ""}
+                        </span>
+                      </div>
+                      <p className="mt-3 text-sm leading-relaxed text-ink-900/70">{r.feedback}</p>
+                    </motion.div>
+                  </StaggerItem>
+                ))}
+              </AnimatePresence>
+            </StaggerReveal>
           )}
         </div>
 
-        <div className="card h-fit p-7">
+        <Reveal delay={0.1} className="card h-fit p-7">
           <h3 className="font-display text-lg font-bold text-ink-950">Leave a review</h3>
           {isAuthenticated ? (
             <form onSubmit={handleSubmit} className="mt-5 space-y-4">
@@ -64,16 +70,18 @@ export default function ReviewsPanel({ food, reviews, onReviewAdded }) {
                 <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-ink-900/50">Rating</label>
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5].map((n) => (
-                    <button
+                    <motion.button
                       type="button"
                       key={n}
+                      whileHover={{ scale: 1.15, y: -2 }}
+                      whileTap={{ scale: 0.9 }}
                       onClick={() => setRating(n)}
-                      className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition ${
+                      className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition-colors ${
                         n <= rating ? "bg-saffron text-ink-950" : "bg-ink-900/5 text-ink-900/40"
                       }`}
                     >
                       {n}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
               </div>
@@ -86,9 +94,15 @@ export default function ReviewsPanel({ food, reviews, onReviewAdded }) {
                 required
               />
               {error && <p className="text-xs font-semibold text-ember-700">{error}</p>}
-              <button type="submit" disabled={submitting} className="btn-primary w-full">
+              <motion.button
+                whileHover={{ scale: submitting ? 1 : 1.02 }}
+                whileTap={{ scale: submitting ? 1 : 0.98 }}
+                type="submit"
+                disabled={submitting}
+                className="btn-primary w-full"
+              >
                 {submitting ? "Submitting…" : "Submit review"}
-              </button>
+              </motion.button>
             </form>
           ) : (
             <p className="mt-4 text-sm text-ink-900/60">
@@ -98,7 +112,7 @@ export default function ReviewsPanel({ food, reviews, onReviewAdded }) {
               to leave a review for this dish.
             </p>
           )}
-        </div>
+        </Reveal>
       </div>
     </section>
   );

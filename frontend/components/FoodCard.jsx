@@ -1,30 +1,53 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { FiStar, FiPlus } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
+import { FiStar, FiPlus, FiCheck } from "react-icons/fi";
 import { foodImage } from "@/lib/api";
 import { useCart } from "@/context/CartContext";
+import { staggerItem } from "@/components/motion/Reveal";
 
 export default function FoodCard({ food }) {
   const { addItem } = useCart() || {};
+  const [justAdded, setJustAdded] = useState(false);
   const hasDiscount = food.pastPrice && food.pastPrice > food.currentPrice;
 
+  const handleAdd = () => {
+    addItem?.(food, 1);
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 900);
+  };
+
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-soft ring-1 ring-black/5 transition-transform duration-300 hover:-translate-y-1">
+    <motion.div
+      variants={staggerItem}
+      layout
+      whileHover={{ y: -8 }}
+      transition={{ type: "spring", stiffness: 300, damping: 22 }}
+      className="group relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-soft ring-1 ring-black/5"
+    >
       <Link href={`/menu/${food._id}`} className="relative flex aspect-square items-center justify-center bg-gradient-to-br from-ember-50 to-ember-100/70 p-6">
         {(food.isPopular || food.isSpecial || hasDiscount) && (
-          <span className="absolute left-4 top-4 z-10 badge">
+          <motion.span
+            className="absolute left-4 top-4 z-10 badge"
+            initial={{ opacity: 0, scale: 0.7 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 260, damping: 18 }}
+          >
             {hasDiscount ? "Sale" : food.isSpecial ? "Chef's pick" : "Popular"}
-          </span>
+          </motion.span>
         )}
-        <Image
-          src={foodImage(food.imageUrl)}
-          alt={food.name}
-          fill
-          sizes="(max-width: 768px) 50vw, 25vw"
-          className="object-contain p-6 transition-transform duration-500 group-hover:scale-110"
-        />
+        <motion.div className="relative h-full w-full" whileHover={{ scale: 1.08, rotate: -1 }} transition={{ type: "spring", stiffness: 250, damping: 18 }}>
+          <Image
+            src={foodImage(food.imageUrl)}
+            alt={food.name}
+            fill
+            sizes="(max-width: 768px) 50vw, 25vw"
+            className="object-contain p-6"
+          />
+        </motion.div>
       </Link>
 
       <div className="flex flex-1 flex-col p-5">
@@ -51,15 +74,41 @@ export default function FoodCard({ food }) {
               <span className="text-sm text-ink-900/40 line-through">${food.pastPrice.toFixed(2)}</span>
             )}
           </div>
-          <button
-            onClick={() => addItem?.(food, 1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-ink-950 text-white transition hover:bg-ember-600"
+          <motion.button
+            onClick={handleAdd}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.85 }}
+            animate={justAdded ? { backgroundColor: "#16a34a" } : { backgroundColor: "#0b0a08" }}
+            transition={{ duration: 0.25 }}
+            className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full text-white"
             aria-label={`Add ${food.name} to cart`}
           >
-            <FiPlus />
-          </button>
+            <AnimatePresence mode="wait" initial={false}>
+              {justAdded ? (
+                <motion.span
+                  key="check"
+                  initial={{ scale: 0, rotate: -90 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  exit={{ scale: 0, rotate: 90 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                >
+                  <FiCheck />
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="plus"
+                  initial={{ scale: 0, rotate: 90 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  exit={{ scale: 0, rotate: -90 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                >
+                  <FiPlus />
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

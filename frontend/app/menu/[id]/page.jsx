@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { FiMinus, FiPlus, FiShoppingBag, FiChevronLeft } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
+import { FiMinus, FiPlus, FiShoppingBag, FiChevronLeft, FiCheck } from "react-icons/fi";
 import { Loader, ErrorState, Stars } from "@/components/UI";
 import FoodCard from "@/components/FoodCard";
+import { StaggerReveal } from "@/components/motion/Reveal";
 import { getFoodById, getFoods, getReviewsByProduct, foodImage } from "@/lib/api";
 import { useCart } from "@/context/CartContext";
 import ReviewsPanel from "@/components/ReviewsPanel";
@@ -52,22 +54,46 @@ export default function ProductPage() {
   return (
     <>
       <section className="container-x py-8">
-        <button onClick={() => router.back()} className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-900/60 hover:text-ember-600">
+        <motion.button
+          whileHover={{ x: -4 }}
+          onClick={() => router.back()}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-900/60 hover:text-ember-600"
+        >
           <FiChevronLeft /> Back
-        </button>
+        </motion.button>
       </section>
 
       <section className="container-x grid gap-12 pb-16 lg:grid-cols-2 lg:items-start">
-        <div className="relative aspect-square overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-ember-50 to-ember-100/60">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="relative aspect-square overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-ember-50 to-ember-100/60"
+        >
           {(food.isPopular || food.isSpecial || hasDiscount) && (
-            <span className="absolute left-6 top-6 z-10 badge">
+            <motion.span
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 260, damping: 18 }}
+              className="absolute left-6 top-6 z-10 badge"
+            >
               {hasDiscount ? "Sale" : food.isSpecial ? "Chef's pick" : "Popular"}
-            </span>
+            </motion.span>
           )}
-          <Image src={foodImage(food.imageUrl)} alt={food.name} fill className="object-contain p-12" priority />
-        </div>
+          <motion.div
+            className="relative h-full w-full"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 220, damping: 20 }}
+          >
+            <Image src={foodImage(food.imageUrl)} alt={food.name} fill className="object-contain p-12" priority />
+          </motion.div>
+        </motion.div>
 
-        <div>
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+        >
           <p className="text-xs font-bold uppercase tracking-widest text-ember-600">{food.category}</p>
           <h1 className="mt-2 font-display text-3xl font-extrabold text-ink-950 sm:text-4xl">{food.name}</h1>
 
@@ -97,16 +123,33 @@ export default function ProductPage() {
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-4 rounded-full border border-ink-900/10 px-4 py-2.5">
-              <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="text-ink-900/60 hover:text-ember-600">
+              <motion.button whileTap={{ scale: 0.85 }} onClick={() => setQty((q) => Math.max(1, q - 1))} className="text-ink-900/60 hover:text-ember-600">
                 <FiMinus />
-              </button>
-              <span className="w-6 text-center font-bold">{qty}</span>
-              <button onClick={() => setQty((q) => q + 1)} className="text-ink-900/60 hover:text-ember-600">
+              </motion.button>
+              <span className="relative w-6 overflow-hidden text-center font-bold">
+                <AnimatePresence mode="popLayout" initial={false}>
+                  <motion.span
+                    key={qty}
+                    initial={{ y: 14, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -14, opacity: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="block"
+                  >
+                    {qty}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
+              <motion.button whileTap={{ scale: 0.85 }} onClick={() => setQty((q) => q + 1)} className="text-ink-900/60 hover:text-ember-600">
                 <FiPlus />
-              </button>
+              </motion.button>
             </div>
 
-            <button
+            <motion.button
+              whileHover={{ scale: added ? 1 : 1.03 }}
+              whileTap={{ scale: added ? 1 : 0.97 }}
+              animate={added ? { backgroundColor: "#16a34a" } : { backgroundColor: "#fb6a17" }}
+              transition={{ duration: 0.25 }}
               onClick={() => {
                 addItem?.(food, qty);
                 setAdded(true);
@@ -114,14 +157,38 @@ export default function ProductPage() {
               }}
               className="btn-primary flex-1 sm:flex-none"
             >
-              <FiShoppingBag /> {added ? "Added!" : "Add to cart"}
-            </button>
+              <AnimatePresence mode="wait" initial={false}>
+                {added ? (
+                  <motion.span
+                    key="added"
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ duration: 0.2 }}
+                    className="inline-flex items-center gap-2"
+                  >
+                    <FiCheck /> Added!
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    key="add"
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ duration: 0.2 }}
+                    className="inline-flex items-center gap-2"
+                  >
+                    <FiShoppingBag /> Add to cart
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
           </div>
 
           {!food.isAvailable && (
             <p className="mt-4 text-sm font-semibold text-ember-700">Currently unavailable — check back soon.</p>
           )}
-        </div>
+        </motion.div>
       </section>
 
       <ReviewsPanel food={food} reviews={reviews} onReviewAdded={(r) => setReviews((prev) => [r, ...prev])} />
@@ -130,11 +197,11 @@ export default function ProductPage() {
         <section className="section-pad bg-white">
           <div className="container-x">
             <h2 className="font-display text-2xl font-extrabold text-ink-950">You might also like</h2>
-            <div className="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-4">
+            <StaggerReveal className="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-4">
               {related.map((f) => (
                 <FoodCard key={f._id} food={f} />
               ))}
-            </div>
+            </StaggerReveal>
           </div>
         </section>
       )}

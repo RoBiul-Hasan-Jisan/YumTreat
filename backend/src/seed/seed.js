@@ -1,17 +1,20 @@
-// Seeds categories, foods, and a demo admin + customer account.
-// Category `img` and food `imageUrl` values are chosen to match the
-// filenames that actually exist under frontend/src/assets, so images
-// render correctly out of the box.
+// Seeds categories and foods. Category `img` and food `imageUrl` values are
+// chosen to match the filenames that actually exist under
+// frontend/src/assets, so images render correctly out of the box.
+//
+// User accounts are no longer seeded here — sign up/sign in happens through
+// Firebase Authentication on the frontend. To get an admin account, add
+// your email to ADMIN_EMAILS in backend/.env, then sign in once (email/
+// password or Google) on the site; the backend promotes you automatically.
 //
 // Usage:
-//   npm run seed            populate the database
-//   npm run seed:destroy    wipe categories/foods/users seeded here
+//   npm run seed            populate categories/foods
+//   npm run seed:destroy    wipe categories/foods seeded here
 
 require("dotenv").config();
 const mongoose = require("mongoose");
 const connectDB = require("../config/db");
 
-const User = require("../models/User");
 const Category = require("../models/Category");
 const Food = require("../models/Food");
 
@@ -123,18 +126,10 @@ const run = async () => {
     await Food.insertMany(foods);
     console.log(`Seeded ${foods.length} food items.`);
 
-    const demoAccounts = [
-        { email: "admin@yumtreat.com", password: "Admin@123", role: "admin" },
-        { email: "customer@yumtreat.com", password: "Customer@123", role: "user" },
-    ];
-
-    for (const acc of demoAccounts) {
-        const existing = await User.findOne({ email: acc.email });
-        if (!existing) {
-            await User.create(acc);
-            console.log(`Created demo ${acc.role} account: ${acc.email} / ${acc.password}`);
-        }
-    }
+    console.log(
+        "No user accounts to seed — sign up/sign in via Firebase on the frontend. " +
+            "Add your email to ADMIN_EMAILS in backend/.env to get admin access on next sign-in."
+    );
 
     await mongoose.disconnect();
     console.log("Seeding complete.");

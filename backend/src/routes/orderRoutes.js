@@ -3,22 +3,23 @@ const {
     placeOrder,
     getMyOrders,
     getAllOrders,
+    getOrderStats,
     updateStatus,
     cancelOrder,
     completeOrder,
 } = require("../controllers/orderController");
-const { requireAuth } = require("../middleware/auth");
+const { requireAuth, requireAdmin } = require("../middleware/auth");
 
 const router = express.Router();
 
 router.post("/place", requireAuth, placeOrder);
 router.get("/my-orders", requireAuth, getMyOrders);
 
-// NOTE: matches the reference frontend's Admin Dashboard, which calls
-// these two endpoints without an auth header. For production use, wrap
-// them with requireAuth + requireAdmin from ../middleware/auth.
-router.get("/admin", getAllOrders);
-router.patch("/update-status/:id", updateStatus);
+// Admin order management — properly protected (previously these two
+// endpoints had no auth at all, which let anyone view/edit every order).
+router.get("/admin/stats", requireAuth, requireAdmin, getOrderStats);
+router.get("/admin", requireAuth, requireAdmin, getAllOrders);
+router.patch("/update-status/:id", requireAuth, requireAdmin, updateStatus);
 
 router.patch("/cancel/:id", requireAuth, cancelOrder);
 router.patch("/complete/:id", requireAuth, completeOrder);

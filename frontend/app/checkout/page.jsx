@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import confetti from "canvas-confetti";
 import { FiCheckCircle } from "react-icons/fi";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { placeOrder } from "@/lib/api";
 import { EmptyState, SectionHeading } from "@/components/UI";
+import { Reveal, StaggerReveal, StaggerItem } from "@/components/motion/Reveal";
 
 const PAYMENT_METHODS = [
   { id: "cash", label: "Cash on delivery" },
@@ -16,7 +18,6 @@ const PAYMENT_METHODS = [
 ];
 
 export default function CheckoutPage() {
-  const router = useRouter();
   const { items, subtotal, clearCart, hydrated } = useCart() || {};
   const { isAuthenticated, ready } = useAuth() || {};
 
@@ -35,6 +36,16 @@ export default function CheckoutPage() {
 
   const deliveryFee = items?.length ? 2.99 : 0;
   const total = (subtotal || 0) + deliveryFee;
+
+  useEffect(() => {
+    if (!placed) return;
+    const fire = (opts) =>
+      confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 }, colors: ["#fb6a17", "#ffc93c", "#ec4f0d", "#ffffff"], ...opts });
+    fire({ angle: 60, origin: { x: 0.15, y: 0.6 } });
+    fire({ angle: 120, origin: { x: 0.85, y: 0.6 } });
+    const t = setTimeout(() => fire({ particleCount: 50, spread: 100 }), 200);
+    return () => clearTimeout(t);
+  }, [placed]);
 
   if (!hydrated || !ready) return null;
 
@@ -78,15 +89,38 @@ export default function CheckoutPage() {
     return (
       <section className="section-pad">
         <div className="container-x text-center">
-          <FiCheckCircle className="mx-auto text-6xl text-ember-500" />
-          <h1 className="mt-6 font-display text-3xl font-extrabold text-ink-950">Order placed!</h1>
-          <p className="mx-auto mt-3 max-w-md text-ink-900/60">
-            Order #{placed._id?.slice(-6).toUpperCase()} is being prepared. You can track its status from your account.
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
+          <motion.div
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 18, delay: 0.1 }}
+          >
+            <FiCheckCircle className="mx-auto text-6xl text-ember-500" />
+          </motion.div>
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="mt-6 font-display text-3xl font-extrabold text-ink-950"
+          >
+            Order placed!
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+            className="mx-auto mt-3 max-w-md text-ink-900/60"
+          >
+            Order #{placed.orderNumber || placed._id?.slice(-6).toUpperCase()} is being prepared. You can track its status from your account.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="mt-8 flex flex-wrap justify-center gap-4"
+          >
             <Link href="/account" className="btn-primary">Track order</Link>
             <Link href="/menu" className="btn-outline">Order more</Link>
-          </div>
+          </motion.div>
         </div>
       </section>
     );
@@ -99,9 +133,10 @@ export default function CheckoutPage() {
     setSubmitting(true);
     setError("");
     try {
+      // Prices/total are computed server-side from live food data — we only
+      // send item ids/quantities, never a client-calculated total.
       const order = await placeOrder({
         ...form,
-        payed: total.toFixed(2),
         products: items.map((i) => ({ product_id: i._id, quantity: i.quantity })),
       });
       clearCart();
@@ -118,8 +153,9 @@ export default function CheckoutPage() {
       <div className="container-x">
         <SectionHeading eyebrow="Almost there" title="Checkout" />
 
-        <form onSubmit={handleSubmit} className="mt-10 grid gap-10 lg:grid-cols-[1.5fr_1fr]">
-          <div className="card space-y-5 p-7">
+        <form onSubmit={handleSubmit}>
+        <StaggerReveal className="mt-10 grid gap-10 lg:grid-cols-[1.5fr_1fr]">
+          <StaggerItem className="card space-y-5 p-7">
             <h3 className="font-display text-lg font-bold text-ink-950">Delivery details</h3>
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="Full name">
@@ -163,9 +199,9 @@ export default function CheckoutPage() {
                 ))}
               </div>
             </div>
-          </div>
+          </StaggerItem>
 
-          <div className="h-fit card p-7">
+          <StaggerItem className="h-fit card p-7">
             <h3 className="font-display text-lg font-bold text-ink-950">Order summary</h3>
             <div className="mt-5 space-y-3 text-sm">
               {items.map((i) => (
@@ -186,10 +222,17 @@ export default function CheckoutPage() {
               </div>
             </div>
             {error && <p className="mt-4 text-xs font-semibold text-ember-700">{error}</p>}
-            <button type="submit" disabled={submitting} className="btn-primary mt-6 w-full">
+            <motion.button
+              type="submit"
+              disabled={submitting}
+              whileHover={{ scale: submitting ? 1 : 1.02 }}
+              whileTap={{ scale: submitting ? 1 : 0.98 }}
+              className="btn-primary mt-6 w-full"
+            >
               {submitting ? "Placing order…" : "Place order"}
-            </button>
-          </div>
+            </motion.button>
+          </StaggerItem>
+        </StaggerReveal>
         </form>
       </div>
     </section>

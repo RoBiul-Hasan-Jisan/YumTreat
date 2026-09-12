@@ -1,8 +1,15 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
     {
+        // Firebase's stable user id (from the decoded ID token's `uid` claim).
+        // This is the source of truth for "who is this" — replaces password auth.
+        firebaseUid: {
+            type: String,
+            required: true,
+            unique: true,
+            index: true,
+        },
         email: {
             type: String,
             required: true,
@@ -10,12 +17,11 @@ const userSchema = new mongoose.Schema(
             lowercase: true,
             trim: true,
         },
-        password: {
-            type: String,
-            required: true,
-            minlength: 6,
-            select: false,
-        },
+        name: { type: String, trim: true, default: "" },
+        photoURL: { type: String, default: "" },
+        // True for Firebase accounts verified via a provider (Google) or
+        // email-link/OTP verification; mirrors the token's `email_verified` claim.
+        emailVerified: { type: Boolean, default: false },
         role: {
             type: String,
             enum: ["user", "admin"],
@@ -24,16 +30,5 @@ const userSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
-
-userSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-});
-
-userSchema.methods.comparePassword = function (candidatePassword) {
-    return bcrypt.compare(candidatePassword, this.password);
-};
 
 module.exports = mongoose.model("User", userSchema);

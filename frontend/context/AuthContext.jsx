@@ -1,60 +1,120 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import {
+  onIdTokenChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  updateProfile,
+  signOut,
+} from "firebase/auth";
+import { auth, googleProvider } from "@/lib/firebase";
 import * as api from "@/lib/api";
 
 const AuthContext = createContext(null);
 
+// Friendlier text for the Firebase error codes people actually hit.
+const friendlyAuthError = (err) => {
+  const code = err?.code || "";
+  const map = {
+    "auth/email-already-in-use": "An account with this email already exists.",
+    "auth/invalid-email": "That email address doesn't look right.",
+    "auth/weak-password": "Password should be at least 6 characters.",
+    "auth/user-not-found": "No account found with that email.",
+    "auth/wrong-password": "Incorrect email or password.",
+    "auth/invalid-credential": "Incorrect email or password.",
+    "auth/popup-closed-by-user": "Sign-in popup was closed before completing.",
+    "auth/too-many-requests": "Too many attempts. Please wait a moment and try again.",
+  };
+  return map[code] || err?.message || "Something went wrong. Please try again.";
+};
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+  const [firebaseUser, setFirebaseUser] = useState(null);
+  const [user, setUser] = useState(null); // synced backend profile (incl. role)
   const [ready, setReady] = useState(false);
 
-  useEffect(() => {
-    const storedToken = window.localStorage.getItem("yumtreat_token");
-    const storedUser = window.localStorage.getItem("yumtreat_user");
-    if (storedToken) setToken(storedToken);
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        // ignore malformed cache
-      }
+  const syncProfile = useCallback(async () => {
+    try {
+      const data = await api.getAccount();
+      setUser(data.profileDetails);
+      return data.profileDetails;
+    } catch {
+      setUser(null);
+      return null;
     }
-    setReady(true);
   }, []);
 
-  const persist = (nextToken, nextUser) => {
-    setToken(nextToken);
-    setUser(nextUser);
-    window.localStorage.setItem("yumtreat_token", nextToken);
-    window.localStorage.setItem("yumtreat_user", JSON.stringify(nextUser));
-  };
+  useEffect(() => {
+    // Fires on sign-in/out AND on the silent background token refresh, so
+    // api.js always has a current Firebase user to pull a fresh token from.
+    const unsubscribe = onIdTokenChanged(auth, async (fbUser) => {
+      setFirebaseUser(fbUser);
+      if (fbUser) {
+        await syncProfile();
+      } else {
+        setUser(null);
+      }
+      setReady(true);
+    });
+    return unsubscribe;
+  }, [syncProfile]);
 
-  const login = useCallback(async (email, password) => {
-    const data = await api.signIn({ email, password });
-    persist(data.token, data.user);
-    return data.user;
-  }, []);
+  const login = useCallback(
+    async (email, password) => {
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        return await syncProfile();
+      } catch (err) {
+        throw new Error(friendlyAuthError(err));
+      }
+    },
+    [syncProfile]
+  );
 
-  const register = useCallback(async (email, password, cPassword) => {
-    const data = await api.signUp({ email, password, cPassword });
-    persist(data.token, data.user);
-    return data.user;
-  }, []);
+  const register = useCallback(
+    async (email, password, name) => {
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        if (name) await updateProfile(cred.user, { displayName: name });
+        return await syncProfile();
+      } catch (err) {
+        throw new Error(friendlyAuthError(err));
+      }
+    },
+    [syncProfile]
+  );
 
-  const logout = useCallback(() => {
-    setToken(null);
+  const loginWithGoogle = useCallback(async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+      return await syncProfile();
+    } catch (err) {
+      throw new Error(friendlyAuthError(err));
+    }
+  }, [syncProfile]);
+
+  const logout = useCallback(async () => {
+    await signOut(auth);
     setUser(null);
-    window.localStorage.removeItem("yumtreat_token");
-    window.localStorage.removeItem("yumtreat_user");
   }, []);
 
-  const isAdmin = user?.userRole === "admin";
+  const isAdmin = user?.role === "admin";
 
   return (
     <AuthContext.Provider
-      value={{ user, token, ready, isAuthenticated: !!token, isAdmin, login, register, logout }}
+      value={{
+        user,
+        firebaseUser,
+        ready,
+        isAuthenticated: !!firebaseUser,
+        isAdmin,
+        login,
+        register,
+        loginWithGoogle,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { FiGrid, FiPackage, FiDollarSign, FiUsers, FiArrowRight } from "react-icons/fi";
 import AdminGuard from "@/components/AdminGuard";
 import { SectionHeading, Loader } from "@/components/UI";
-import { getFoods, getAllOrders } from "@/lib/api";
+import { getFoods, getOrderStats } from "@/lib/api";
 
 export default function AdminHome() {
   return (
@@ -19,10 +19,13 @@ function AdminOverview() {
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    Promise.all([getFoods(), getAllOrders()]).then(([foods, orders]) => {
-      const revenue = orders.reduce((sum, o) => sum + Number(o.payed || 0), 0);
-      const pending = orders.filter((o) => o.status === "preparing").length;
-      setStats({ foods: foods.length, orders: orders.length, revenue, pending });
+    Promise.all([getFoods(), getOrderStats()]).then(([foods, orderStats]) => {
+      setStats({
+        foods: foods.length,
+        orders: orderStats.totalOrders,
+        revenue: orderStats.totalRevenue,
+        pending: orderStats.statusCounts.preparing,
+      });
     });
   }, []);
 

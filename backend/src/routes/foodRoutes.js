@@ -6,16 +6,14 @@ const {
     updateFood,
     deleteFood,
 } = require("../controllers/foodController");
+const { requireAuth, requireAdmin } = require("../middleware/auth");
 
 const router = express.Router();
 
-// NOTE: matches the reference frontend's Admin Dashboard, which calls
-// these endpoints without an auth header. For production use, wrap
-// add/update/delete with requireAuth + requireAdmin from ../middleware/auth.
 router.get("/", getFoods);
 router.get("/:id", getFoodById);
-router.post("/add", addFood);
-router.put("/update/:id", updateFood);
-router.delete("/delete/:id", deleteFood);
+router.post("/add", requireAuth, requireAdmin, addFood);
+router.put("/update/:id", requireAuth, requireAdmin, updateFood);
+router.delete("/delete/:id", requireAuth, requireAdmin, deleteFood);
 
 module.exports = router;

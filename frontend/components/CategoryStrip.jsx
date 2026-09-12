@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { categoryImage } from "@/lib/api";
 
 export default function CategoryStrip({ categories, active, onSelect }) {
@@ -27,9 +28,12 @@ export default function CategoryStrip({ categories, active, onSelect }) {
 
 function CategoryPill({ label, image, active, onClick }) {
   return (
-    <button
+    <motion.button
       onClick={onClick}
-      className={`flex shrink-0 items-center gap-3 rounded-full border px-4 py-2.5 transition-all ${
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.94 }}
+      transition={{ type: "spring", stiffness: 400, damping: 22 }}
+      className={`flex shrink-0 items-center gap-3 rounded-full border px-4 py-2.5 transition-colors ${
         active
           ? "border-ember-500 bg-ember-500 text-white shadow-glow"
           : "border-black/10 bg-white text-ink-900 hover:border-ember-400"
@@ -41,6 +45,6 @@ function CategoryPill({ label, image, active, onClick }) {
         </span>
       )}
       <span className="text-sm font-bold">{label}</span>
-    </button>
+    </motion.button>
   );
 }

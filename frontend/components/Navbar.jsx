@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { FiMenu, FiX, FiShoppingBag, FiUser } from "react-icons/fi";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -22,13 +23,24 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-black/5 bg-cream/85 backdrop-blur-md">
-      <div className="container-x flex h-20 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 font-display text-2xl font-extrabold tracking-tight text-ink-950">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-ember-500 text-lg text-white shadow-glow">
-            Y
-          </span>
-          Yum<span className="text-ember-600">Treat</span>
-        </Link>
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="container-x flex h-20 items-center justify-between"
+      >
+        <Link
+  href="/"
+  className="flex items-center gap-2 font-display text-2xl font-extrabold tracking-tight text-ink-950"
+>
+  <img
+    src="/logo.png"
+    alt="YumTreat logo"
+    className="h-20 w-20 object-contain"
+  />
+
+  
+</Link>
 
         <nav className="hidden items-center gap-8 md:flex">
           {LINKS.map((link) => (
@@ -61,11 +73,20 @@ export default function Navbar() {
             aria-label="Cart"
           >
             <FiShoppingBag size={18} />
-            {totalCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-ember-500 text-[10px] font-bold text-white">
-                {totalCount}
-              </span>
-            )}
+            <AnimatePresence>
+              {totalCount > 0 && (
+                <motion.span
+                  key={totalCount}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                  className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-ember-500 text-[10px] font-bold text-white"
+                >
+                  {totalCount}
+                </motion.span>
+              )}
+            </AnimatePresence>
           </Link>
 
           {isAuthenticated ? (
@@ -96,7 +117,7 @@ export default function Navbar() {
             {open ? <FiX size={18} /> : <FiMenu size={18} />}
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {open && (
         <div className="border-t border-black/5 bg-cream md:hidden">

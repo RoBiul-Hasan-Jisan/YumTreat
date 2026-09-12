@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { FiArrowRight } from "react-icons/fi";
 import Hero from "@/components/Hero";
-import Features from "@/components/Features";
 import FoodCard from "@/components/FoodCard";
-import { StatsBar, CtaBanner } from "@/components/CtaBanner";
+import { CtaBanner } from "@/components/CtaBanner";
 import Testimonials from "@/components/Testimonials";
 import { SectionHeading } from "@/components/UI";
+import { Reveal, StaggerReveal, StaggerItem } from "@/components/motion/Reveal";
 import { getFoods, categoryImage, getCategories } from "@/lib/api";
 
 export default function HomePage() {
@@ -37,32 +38,45 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      <StatsBar />
-      <Features />
 
       {/* Categories */}
       {categories.length > 0 && (
         <section className="section-pad">
           <div className="container-x">
-            <SectionHeading
-              eyebrow="What are you craving?"
-              title="Browse by category"
-              subtitle="From wood-fired pizza to slow-simmered curry — every category is stacked with fan favorites."
-            />
-            <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
+            <Reveal>
+              <SectionHeading
+                eyebrow="What are you craving?"
+                title="Browse by category"
+                subtitle="From wood-fired pizza to slow-simmered curry — every category is stacked with fan favorites."
+              />
+            </Reveal>
+            <StaggerReveal className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
               {categories.map((cat) => (
-                <Link
-                  key={cat._id}
-                  href={`/menu?category=${encodeURIComponent(cat.name)}`}
-                  className="group flex flex-col items-center gap-3 rounded-3xl bg-white p-5 text-center shadow-soft ring-1 ring-black/5 transition hover:-translate-y-1 hover:shadow-glow"
-                >
-                  <span className="flex h-16 w-16 items-center justify-center rounded-full bg-ember-50 transition group-hover:bg-ember-100">
-                    <Image src={categoryImage(cat.img)} alt={cat.name} width={40} height={40} className="object-contain" />
-                  </span>
-                  <span className="text-sm font-bold text-ink-950">{cat.name}</span>
-                </Link>
+                <StaggerItem key={cat._id}>
+                  <motion.div
+                    whileHover={{ y: -6, scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    <Link
+                      href={`/menu?category=${encodeURIComponent(cat.name)}`}
+                      className="group flex flex-col items-center gap-3 rounded-3xl bg-white p-5 text-center shadow-soft ring-1 ring-black/5 transition hover:shadow-glow"
+                    >
+                      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-ember-50 transition group-hover:bg-ember-100">
+                        <Image
+                          src={categoryImage(cat.img)}
+                          alt={cat.name}
+                          width={40}
+                          height={40}
+                          className="object-contain"
+                        />
+                      </span>
+                      <span className="text-sm font-bold text-ink-950">{cat.name}</span>
+                    </Link>
+                  </motion.div>
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerReveal>
           </div>
         </section>
       )}
@@ -70,7 +84,7 @@ export default function HomePage() {
       {/* Popular dishes */}
       <section className="section-pad bg-white">
         <div className="container-x">
-          <div className="flex flex-wrap items-end justify-between gap-6">
+          <Reveal className="flex flex-wrap items-end justify-between gap-6">
             <SectionHeading
               eyebrow="Fan favorites"
               title="Our most-loved dishes"
@@ -79,7 +93,7 @@ export default function HomePage() {
             <Link href="/menu" className="btn-outline shrink-0">
               View full menu <FiArrowRight />
             </Link>
-          </div>
+          </Reveal>
 
           {status === "loading" && (
             <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
@@ -97,11 +111,11 @@ export default function HomePage() {
           )}
 
           {status === "ready" && (
-            <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+            <StaggerReveal className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
               {(popular.length ? popular : foods.slice(0, 8)).map((food) => (
                 <FoodCard key={food._id} food={food} />
               ))}
-            </div>
+            </StaggerReveal>
           )}
         </div>
       </section>

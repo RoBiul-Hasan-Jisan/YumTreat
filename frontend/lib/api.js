@@ -1,4 +1,5 @@
 import axios from "axios";
+import { auth } from "@/lib/firebase";
 
 // Base URL of the Express/Mongo backend in ../backend
 // Set NEXT_PUBLIC_API_URL in .env.local to override (see .env.example).
@@ -10,11 +11,14 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Attach the JWT (if the user is signed in) to every request.
-api.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = window.localStorage.getItem("yumtreat_token");
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+// Attach a fresh Firebase ID token to every request. Firebase ID tokens
+// expire hourly, so we always pull the current one from the SDK (which
+// silently refreshes it in the background) rather than caching it ourselves.
+api.interceptors.request.use(async (config) => {
+  const currentUser = auth.currentUser;
+  if (currentUser) {
+    const token = await currentUser.getIdToken();
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -43,17 +47,23 @@ export const deleteFood = (id) => api.delete(`/foods/delete/${id}`).then((r) => 
 export const getCategories = () => api.get("/categories").then((r) => r.data);
 
 /* ----------------------------- Auth ----------------------------- */
-export const signUp = (payload) => api.post("/auth/sign_up", payload).then((r) => r.data);
-export const signIn = (payload) => api.post("/auth/sign_in", payload).then((r) => r.data);
+// Sign-up/sign-in happen client-side via the Firebase SDK (see AuthContext).
+// This just verifies the current Firebase session with the backend and
+// returns/syncs the local profile (role, etc).
 export const getAccount = () => api.get("/auth/account").then((r) => r.data);
 
 /* ---------------------------- Orders ----------------------------- */
 export const placeOrder = (payload) => api.post("/orders/place", payload).then((r) => r.data);
 export const getMyOrders = () => api.get("/orders/my-orders").then((r) => r.data);
-export const getAllOrders = () => api.get("/orders/admin").then((r) => r.data);
-export const updateOrderStatus = (id, status) =>
-  api.patch(`/orders/update-status/${id}`, { status }).then((r) => r.data);
-export const cancelOrder = (id) => api.patch(`/orders/cancel/${id}`).then((r) => r.data);
+
+// filters: { status, search, from, to, page, limit, sort }
+export const getAllOrders = (filters = {}) =>
+  api.get("/orders/admin", { params: filters }).then((r) => r.data);
+export const getOrderStats = () => api.get("/orders/admin/stats").then((r) => r.data);
+export const updateOrderStatus = (id, status, cancelReason) =>
+  api.patch(`/orders/update-status/${id}`, { status, cancelReason }).then((r) => r.data);
+export const cancelOrder = (id, reason) =>
+  api.patch(`/orders/cancel/${id}`, { reason }).then((r) => r.data);
 export const completeOrder = (id) => api.patch(`/orders/complete/${id}`).then((r) => r.data);
 
 /* ---------------------------- Reviews ----------------------------- */
