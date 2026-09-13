@@ -105,8 +105,8 @@ export default function HomePage() {
 
           {status === "error" && (
             <p className="mt-10 text-sm text-ember-700">
-              Couldn&apos;t reach the menu API. Make sure the backend server is running and{" "}
-              <code className="rounded bg-ink-900/5 px-1.5 py-0.5">NEXT_PUBLIC_API_URL</code> points to it.
+              Couldn&apos;t reach the menu API. Make sure the backend server is running 
+              
             </p>
           )}
 
